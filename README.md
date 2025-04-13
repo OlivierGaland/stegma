@@ -7,13 +7,14 @@ Important : This package should not (yet) used for production as it may strongly
 
 Planned enhancement (not implemented) :
 - Decoy mode : This will not encode any header (storing data lenght) but need user to provide data length at decoding. Usage could be hiding an encryption key inside the image, if the password is wrong, a plausible but erroneous encryption key will be returned
+- Media type : add other media or file format (audio, video)
+- Refactoring to add other steganography method (currently only LSB)
 - Pip package creation
 
 # Usage
 
 Currently in dev, the script create_stegano.py is an entry point showing class usage.
 - feed INPUT_FILE, OUTPUT_FILE, PASSWORD, SECRET
-- add other input file type (audio)
 - select codec/noise class by setting variables codec and noise
 
 Once ran it will create the output png file and show a plot of the result (input, output, differences), ultimatly verifying the encoding/decoding is successfull
