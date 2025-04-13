@@ -13,6 +13,7 @@ Planned enhancement (not implemented) :
 
 Currently in dev, the script create_stegano.py is an entry point showing class usage.
 - feed INPUT_FILE, OUTPUT_FILE, PASSWORD, SECRET
+- add other input file type (audio)
 - select codec/noise class by setting variables codec and noise
 
 Once ran it will create the output png file and show a plot of the result (input, output, differences), ultimatly verifying the encoding/decoding is successfull
