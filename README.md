@@ -24,7 +24,8 @@ Input :
 Steganography logic :
 
 - Converting input image into png RGBA 
-- Using LSB (least significant bit) on channel R,G,B with 3 coding bit for a pixel (4*8 = 32 bits) 
+- Using LSB (least significant bit) on channel R,G,B with 3 coding bit for a pixel (4*8 = 32 bits)
+- Secret is crypted using password hash in xor schema
 
 Offset codec logic :
 
