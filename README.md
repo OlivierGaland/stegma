@@ -1,4 +1,5 @@
 ![image](https://github.com/user-attachments/assets/f9f789fe-01fd-4b96-8a9b-5733ea76e2a9)
+![image](https://github.com/user-attachments/assets/b841c32b-bcc7-4f6a-a5fd-2b73c75cae22)
 
 # stegma
 
