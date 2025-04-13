@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/f9f789fe-01fd-4b96-8a9b-5733ea76e2a9)
+
 # stegma
 
 Steganography python library for learning.
