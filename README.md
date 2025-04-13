@@ -17,9 +17,9 @@ Once ran it will create the output png file and show a plot of the result (input
 
 Input :
 
-- Image to process (any format, output will be a RGBA png)
-- Password
-- Secret to hide (bitfield in string format)
+- generate/retrieve : Image to process (any format, output will be a RGBA png)
+- generate/retrieve : Password
+- generate : Secret to hide (bitfield in string format)
 
 Steganography logic :
 
