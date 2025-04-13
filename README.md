@@ -61,14 +61,14 @@ pip : og_log, PIL, hashlib, sympy, numpy, matplotlib
 # Screenshots
 
 Console :
-
+![image](https://github.com/user-attachments/assets/e87ee26d-3833-4828-bff7-e4304dbe3e53)
 
 Encoding using NaiveDispersion (sequential data writing) :
-
+![image](https://github.com/user-attachments/assets/bd64a81d-5814-4a0e-a8c4-ae1e33ccbf95)
 
 Encoding using LinearDispersion (sequential data writing with interval) :
-
+![image](https://github.com/user-attachments/assets/b62628da-d5e6-4ff8-b76a-3b3119179bc4)
 
 Encoding using ZpStarDispersion (better concealed data writing using (Z/pZ)* schema) :
-
+![image](https://github.com/user-attachments/assets/e448f795-d32c-42e1-8d11-334303abfc8b)
 
