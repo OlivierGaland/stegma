@@ -1,19 +1,18 @@
+from src.core.writer import SteganoWriter
+from src.core.reader import SteganoReader
+from src.media.image import Image
+from src.codec.std import Standard
+from src.codec.decoy import Decoy
+from src.algo.lsb import Lsb
+from src.dispersion.linear import LinearDispersion 
+from src.dispersion.naive import NaiveDispersion
+from src.dispersion.zp_star import ZpStarDispersion
+from src.noise.random import RandomNoiseGenerator
+from src.noise.none import NoNoiseGenerator
+
 from og_log import LOG,LEVEL
 
-from src.img import SteganoImgWriter, SteganoImgReader
-from src.dispersion import NaiveDispersion,LinearDispersion,ZpStarDispersion
-from src.noise import NoNoiseGenerator, RandomNoiseGenerator
-
-from src.tools import show_pictures_diff,show_pictures_diff_alt,encode_string,decode_string
-
-
-INPUT_FILE = "./test/pics/fantasy.jpg" 
-OUTPUT_FILE = "./test/output/fantasy.out.png" 
-
-#INPUT_FILE = "./test/pics/cat000.png"
-#OUTPUT_FILE = "./test/output/cat000.out.png" 
-
-PASSWORD = 'vR7#pZ1m$Lq@X9tD'
+from src.tools import encode_string,decode_string
 
 SECRET = """
 It is not the critic who counts; not the man who points out how the strong man stumbles,
@@ -36,42 +35,54 @@ and the glory of his efforts. And while the arena is filled with danger and unce
 also where the greatest triumphs are won, where dreams are realized, and where legacies are built.
 """
 
-def main():
-
-    data = encode_string(SECRET)
-    LOG.info("Data to hide : "+str(data))   #256 bit
-
-    out = decode_string(data)
-    LOG.info("Decoded data : "+str(out))
-
-    #codec = NaiveDispersion
-    #codec = LinearDispersion
-    codec = ZpStarDispersion
-    LOG.info("Codec : "+str(codec))
-    #noise = NoNoiseGenerator
-    noise = RandomNoiseGenerator
-    LOG.info("Noise : "+str(noise))
-
-    print("Encoding secret with codec "+str(codec).__class__.__name__+" and noise "+str(noise.__class__.__name__))
-    f = SteganoImgWriter(codec,noise,PASSWORD,INPUT_FILE,data)
-    LOG.info("Factory : "+str(f))
-    f.embed_data_lsb(OUTPUT_FILE)
-
-    print("Reading secret with codec "+str(codec.__class__.__name__))
-    g = SteganoImgReader(codec,PASSWORD,OUTPUT_FILE)
-    LOG.info("Factory : "+str(g))
-
-    if f.data != g.data: raise Exception("Data corrupted")
-    print("Verifying data with success : "+str(decode_string(g.data)))
-
-    LOG.info("Data extracted : "+str(decode_string(g.data)))
-
-    #show_pictures_diff_alt(INPUT_FILE,OUTPUT_FILE)
-    show_pictures_diff(INPUT_FILE,OUTPUT_FILE)
-
-if __name__ == "__main__":
-    #LOG.start()
+if __name__ == '__main__':
+    LOG.start()
+    LOG.level(LEVEL.error)
     LOG.info("Start")
-    LOG.level(LEVEL.info)
-    main()
 
+    #INPUT_FILE = "./media/image/fantasy_micro.png"
+    #OUTPUT_FILE = "./media/image/fantasy_micro_out.png"
+    INPUT_FILE = "./media/image/fantasy.jpg"
+    OUTPUT_FILE = "./media/image/fantasy_out.png"
+    #INPUT_FILE = "./media/image/cat000.png"
+    #OUTPUT_FILE = "./media/image/cat000_out.png"
+
+    password = 'el653CWrON!N3ihw'
+    data = encode_string(SECRET)
+
+    MEDIA = [Image][0]
+    CODEC = [Standard , Decoy][1]
+    ALGO = [Lsb][0]
+    DISPERSION = [NaiveDispersion , LinearDispersion ,ZpStarDispersion][2]
+    NOISE = [NoNoiseGenerator , RandomNoiseGenerator][1]
+
+    # encode
+
+    w = SteganoWriter()    
+    w.register_media(MEDIA,file=INPUT_FILE)
+    w.register_codec(CODEC,password=password,encode=data)
+    w.register_algo(ALGO,pattern="RGB",coding_bits=1)
+    w.register_dispersion(DISPERSION)
+    w.register_noise(NOISE)
+    w.encode()
+    if CODEC == Decoy:   #Decoy codec (no header) needs user to know size to recover the secret
+        secret_size = len(w.codec.output)
+        print("Size of secret to hide :",secret_size) 
+    w.write(OUTPUT_FILE)
+
+    # verify
+
+    d = SteganoReader()
+    d.register_media(MEDIA,file=OUTPUT_FILE)
+    if CODEC == Decoy: d.register_codec(CODEC,password=password,size=secret_size)   #size is mandatory if CODEC is Decoy
+    else: d.register_codec(CODEC,password=password)
+    d.register_algo(ALGO,pattern="RGB",coding_bits=1)
+    d.register_dispersion(DISPERSION)
+    d.decode()
+
+    print("Decoded data :",decode_string(d.retrieve_data()))
+
+    if SECRET != decode_string(d.retrieve_data()):
+        raise Exception("Failure : Decoded data does not match original data")
+
+    LOG.info("End")

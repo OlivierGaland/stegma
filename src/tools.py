@@ -1,20 +1,85 @@
 import hashlib
-import sys
+import sys,time
 
-from PIL import Image, ImageChops,ImageDraw
-import matplotlib.pyplot as plt
-import numpy as np
+class ProgressBar():
 
-def progress_bar(text, current, total, bar_length=100):
-    percent = current / total
-    completed = int(bar_length * percent)
-    bar = '█' * completed + '-' * (bar_length - completed)
-    sys.stdout.write(f'\r{text} |{bar}| {int(percent * 100)}%')
-    sys.stdout.flush()
+    def is_container(obj):
+        try:
+            iter(obj)
+            return not isinstance(obj, str)
+        except TypeError:
+            return False
 
-def progress_bar_end(text, bar_length=100):
-    progress_bar(text, 1, 1, bar_length)
-    print()
+    def __init__(self, text_list, start_list, total_list, update_interval_percent=1, min_update_interval_sec=0.2, bar_length=100):
+        if ProgressBar.is_container(text_list) and ProgressBar.is_container(start_list) and ProgressBar.is_container(total_list):
+            if len(text_list) != len(start_list) or len(start_list) != len(total_list):
+                raise Exception("text_list, start_list and total_list must have the same length")
+        elif not ProgressBar.is_container(text_list) and not ProgressBar.is_container(start_list) and not ProgressBar.is_container(total_list):
+            text_list = [text_list]
+            start_list = [start_list]
+            total_list = [total_list]
+        else:
+            raise Exception("text_list, start_list and total_list must have the same length")
+        self.text_list = text_list
+        self.start_list = start_list
+        self.total_list = total_list
+        self.update_interval_percent = update_interval_percent
+        self.min_update_interval_sec = min_update_interval_sec
+        self.bar_length = bar_length
+        self.last_update_percent = [None] * len(text_list)
+        self.last_update_time = [None] * len(text_list)
+        self.last_written_bars = [None] * len(text_list)
+
+    def update(self, current):
+        do_update = False
+        if not ProgressBar.is_container(current): current = [current]
+        for i in range(len(self.text_list)):
+            percent = 100 * (current[i] - self.start_list[i]) / (self.total_list[i] - self.start_list[i])
+            if percent > 100 or percent < 0: raise Exception("percent must be between 0 and 100 : " + str(percent))
+
+            percent_threshold_exceeded = (self.last_update_percent[i] is None or
+                                          percent > self.last_update_percent[i] + self.update_interval_percent)
+            time_threshold_exceeded = (self.last_update_time[i] is None or
+                                       time.time() - self.last_update_time[i] >= self.min_update_interval_sec)
+
+            if percent_threshold_exceeded and time_threshold_exceeded:
+                do_update = True
+                self.last_update_percent[i] = percent
+                self.last_update_time[i] = time.time()
+
+        if do_update: self._update(current)
+
+    def _update(self, current_list):
+        num_bars = len(self.text_list)
+
+        if self.last_written_bars.count(None) == 0:
+            for i in range(num_bars - 1):
+                sys.stdout.write("\033[1A")
+        sys.stdout.write("\r")
+
+        for i in range(num_bars):
+            text = self.text_list[i]
+            current = current_list[i]
+            total = self.total_list[i]
+
+            percent = current / total
+            completed = int(self.bar_length * percent)
+            bar = '█' * completed + '-' * (self.bar_length - completed)
+
+            line = f"{text} |{bar}| {int(percent * 100)}%"
+            if self.last_written_bars[i] != line:
+                self.last_written_bars[i] = line
+                sys.stdout.write(f"{line}")
+
+            if i < num_bars - 1: sys.stdout.write("\n")
+
+        sys.stdout.flush()
+
+
+    def end(self):
+        self._update(self.total_list)
+        print()
+
 
 def encode_string(data: str) -> str:
     return ''.join(format(ord(c), '08b') for c in data)
@@ -38,85 +103,3 @@ def get_int_from_hash(hash_hex: str, limit: int) -> int:
     hash_hex = hash_hex.strip().lower().replace("0x", "")
     hash_int = int(hash_hex, 16)
     return hash_int % limit
-
-
-def show_pictures_diff(file_in,file_out):
-    original = Image.open(file_in).convert("RGB")
-    embed = Image.open(file_out+".tmp").convert("RGB")
-    stego = Image.open(file_out).convert("RGB")
-
-    if original.size != embed.size: raise ValueError("Images have different sizes.")
-    if original.size != stego.size: raise ValueError("Images have different sizes.")
-
-    diff_embed = ImageChops.difference(original, embed)
-    diff_embed_np = np.array(diff_embed)  
-    diff_embed_np = (diff_embed_np > 0).astype(np.uint8) * 255 
-    diff_embed_visible = Image.fromarray(diff_embed_np)
-
-    diff = ImageChops.difference(original, stego)
-    diff_np = np.array(diff)  
-    diff_np = (diff_np > 0).astype(np.uint8) * 255 
-    diff_visible = Image.fromarray(diff_np)
-
-    # Crée une grille 2x2 pour afficher les images
-    fig, axs = plt.subplots(2, 2, figsize=(16, 12))
-
-    # Affichage de l'image originale
-    axs[0, 0].imshow(original)
-    axs[0, 0].set_title("Former image")
-    axs[0, 0].axis("off")
-
-    # Affichage de l'image steganographique
-    axs[0, 1].imshow(stego)
-    axs[0, 1].set_title("Steganographed image")
-    axs[0, 1].axis("off")
-
-    # Affichage de la différence entre l'image originale et l'image d'intégration
-    axs[1, 0].imshow(diff_embed_visible)
-    axs[1, 0].set_title("Differences (Secret only)")
-    axs[1, 0].axis("off")
-
-    # Affichage de la différence entre l'image originale et l'image steganographique
-    axs[1, 1].imshow(diff_visible)
-    axs[1, 1].set_title("Differences (Final, with noise)")
-    axs[1, 1].axis("off")
-
-    plt.tight_layout()
-    plt.show()
-
-
-def show_pictures_diff_alt(file_in,file_out):
-    original = Image.open(file_in).convert("RGB")
-    stego = Image.open(file_out).convert("RGB")
-
-    diff = ImageChops.difference(original, stego)
-    pixel_size = 3
-    diff_np = np.array(diff)
-    
-    w, h = original.size
-    amplified = Image.new('RGB', (w, h), (0, 0, 0))
-    draw = ImageDraw.Draw(amplified)
-
-    for y in range(h):
-        for x in range(w):
-            if np.any(diff_np[y, x] > 0):
-                draw.rectangle(
-                    [(x - pixel_size // 2, y - pixel_size // 2), 
-                     (x + pixel_size // 2, y + pixel_size // 2)],
-                    fill=(255, 255, 255)
-                )
-
-    fig, axs = plt.subplots(1, 3, figsize=(30, 10))
-
-    axs[0].imshow(original)
-    axs[0].set_title("Former image")
-    axs[0].axis("off")
-    axs[1].imshow(stego)
-    axs[1].set_title("Steganographed image")
-    axs[1].axis("off")
-    axs[2].imshow(amplified)
-    axs[2].set_title(f"Differences (size {pixel_size}px)")
-    axs[2].axis("off")
-
-    plt.tight_layout()
-    plt.show()

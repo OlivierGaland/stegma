@@ -44,7 +44,7 @@ Determinist codec parameters :
 - start_offset (ZpStarDispersion): from hash(HSB image fingerprint + password) converted to integer [1;prime-1] 
 - increment (LinearDispersion) : from hash(HSB image fingerprint + password) converted to integer [1;max_offset], nearest higher or equal integer matching gcd(increment,max_offset) = 1
 - prime (ZpStarDispersion) : from hash(HSB image fingerprint + password) converted to integer [max_offset-max_offset//16;max_offset], nearest previous prime
-- generator (ZpStarDispersion): from hash(HSB image fingerprint + password) converted to integer [1;prime-1], nearest higher generator of (Z/Zp)*
+- generator (ZpStarDispersion): from hash(HSB image fingerprint + password) converted to integer [1;prime-1], nearest higher generator of (Z/pZ)*
 
 Secret encoding :
 
