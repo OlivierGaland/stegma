@@ -7,10 +7,10 @@ You can hide a secret in an image protected with a password.
 
 Important : This package should not (yet) used for production as it may strongly change from the current state, without backward compatibility for beta releases. Despite this warning If you want to use it, be sure to keep a repository image of the code to be sure to be able to retrieve the secret.
 
-Planned enhancement (not implemented) :
-- Decoy mode : This will not encode any header (storing data lenght) but need user to provide data length at decoding. Usage could be hiding an encryption key inside the image, if the password is wrong, a plausible but erroneous encryption key will be returned
+Planned enhancement :
+- Implemented : Decoy mode : This will not encode any header (storing data lenght) but need user to provide data length at decoding. Usage could be hiding an encryption key inside the image, if the password is wrong, a plausible but erroneous encryption key will be returned
 - Media type : add other media or file format (audio, video)
-- Refactoring to add other steganography method (currently only LSB)
+- Refactoring to add other steganography method (currently only LSB) : Added LSB on 1,2 and 3 bits + choice of encoding pattern in channels RGBA ("BG" means B then G are used)
 - Pip package creation
 
 # Usage
