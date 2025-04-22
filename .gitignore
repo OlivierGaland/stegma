@@ -1,4 +1,4 @@
-test/output/*
+media/output/*
 tmp/*
 
 # Byte-compiled / optimized / DLL files

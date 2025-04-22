@@ -4,15 +4,19 @@ from src.media.image import Image
 from src.codec.std import Standard
 from src.codec.decoy import Decoy
 from src.algo.lsb import Lsb
+
 from src.dispersion.linear import LinearDispersion 
 from src.dispersion.naive import NaiveDispersion
 from src.dispersion.zp_star import ZpStarDispersion
+from src.dispersion.chained_hash import ChainedHashDispersion
+
 from src.noise.random import RandomNoiseGenerator
 from src.noise.none import NoNoiseGenerator
 
 from og_log import LOG,LEVEL
 
 from src.tools import encode_string,decode_string
+
 
 SECRET = """
 It is not the critic who counts; not the man who points out how the strong man stumbles,
@@ -37,30 +41,28 @@ also where the greatest triumphs are won, where dreams are realized, and where l
 
 if __name__ == '__main__':
     LOG.start()
-    LOG.level(LEVEL.error)
+    LOG.level(LEVEL.warning)
     LOG.info("Start")
 
-    #INPUT_FILE = "./media/image/fantasy_micro.png"
-    #OUTPUT_FILE = "./media/image/fantasy_micro_out.png"
-    INPUT_FILE = "./media/image/fantasy.jpg"
-    OUTPUT_FILE = "./media/image/fantasy_out.png"
-    #INPUT_FILE = "./media/image/cat000.png"
-    #OUTPUT_FILE = "./media/image/cat000_out.png"
+    INPUT_DIR = "./media/image/"
+    OUTPUT_DIR = "./media/output/"
 
-    password = 'el653CWrON!N3ihw'
-    data = encode_string(SECRET)
+    INPUT_FILENAME = [ "beavers.png" ,"fantasy_micro.png" , "fantasy_mini.jpg" , "fantasy.jpg" , "cat000.png"][0]
+    INPUT_FILE = INPUT_DIR + INPUT_FILENAME
+    OUTPUT_FILE = OUTPUT_DIR + INPUT_FILENAME
+    PASSWORD = 'el653CWrON!N3ihw'
 
     MEDIA = [Image][0]
-    CODEC = [Standard , Decoy][1]
+    CODEC = [Standard , Decoy][0]
     ALGO = [Lsb][0]
-    DISPERSION = [NaiveDispersion , LinearDispersion ,ZpStarDispersion][2]
+    DISPERSION = [NaiveDispersion , LinearDispersion ,ZpStarDispersion, ChainedHashDispersion][3]
     NOISE = [NoNoiseGenerator , RandomNoiseGenerator][1]
+    data = encode_string(SECRET)
 
     # encode
-
     w = SteganoWriter()    
-    w.register_media(MEDIA,file=INPUT_FILE)
-    w.register_codec(CODEC,password=password,encode=data)
+    w.register_media(MEDIA,file=INPUT_FILE,summary=True)
+    w.register_codec(CODEC,password=PASSWORD,encode=data)
     w.register_algo(ALGO,pattern="RGB",coding_bits=1)
     w.register_dispersion(DISPERSION)
     w.register_noise(NOISE)
@@ -71,11 +73,10 @@ if __name__ == '__main__':
     w.write(OUTPUT_FILE)
 
     # verify
-
     d = SteganoReader()
     d.register_media(MEDIA,file=OUTPUT_FILE)
-    if CODEC == Decoy: d.register_codec(CODEC,password=password,size=secret_size)   #size is mandatory if CODEC is Decoy
-    else: d.register_codec(CODEC,password=password)
+    if CODEC == Decoy: d.register_codec(CODEC,password=PASSWORD,size=secret_size)   #size is mandatory if CODEC is Decoy
+    else: d.register_codec(CODEC,password=PASSWORD)
     d.register_algo(ALGO,pattern="RGB",coding_bits=1)
     d.register_dispersion(DISPERSION)
     d.decode()

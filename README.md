@@ -42,6 +42,7 @@ Offset codec logic :
 - NaiveDispersion : Basic sequential data encoding, o(n+1) = o(n) + 1 % max_offset
 - LinearDispersion : Same as sequential, but using a generated increment, o(n+1) = o(n) + i % max_offset  
 - ZpStarDispersion : Using (Z/pZ)* group generator, o(n+1) = g*o(n) % prime   (prime <= max_offset)
+- ChainedHashDispersion : Following sequence : U0=hash(HSB image fingerprint + password), Un+1 = sha256(Un), generated offset(n) computed from Un, if already generated (collision) discard and get next element  
 
 Noise feature :
 

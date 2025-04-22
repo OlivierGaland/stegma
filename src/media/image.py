@@ -26,9 +26,10 @@ class Image(Media):
     def entropy(self,salt: str) -> str:
         return hashlib.sha256(self.tobytes_for_hash + salt.encode("utf-8")).hexdigest()
 
-    @validate_kwargs({ 'mandatory': ['file'] })
+    @validate_kwargs({ 'mandatory': ['file'], 'optional': [{ 'name': 'summary', 'default': False }] })
     def __init__(self,**kwargs):
         self.filename = kwargs.pop('file')
+        self.summary = kwargs.pop('summary')
         self.media = PIL.Image.open(self.filename).convert("RGBA")
         super().__init__(**kwargs)
 
@@ -119,7 +120,10 @@ class Image(Media):
 
         pb.end()
 
-        self.show_summary(self.media,tmp,output)   #TODO
+        if self.summary:
+            print("Summary windows opened")
+            self.show_summary(self.media,tmp,output)
+            print("Summary windows closed")
 
         return output
 
