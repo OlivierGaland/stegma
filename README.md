@@ -84,3 +84,6 @@ Encoding using LinearDispersion (sequential data writing with interval) :
 Encoding using ZpStarDispersion (better concealed data writing using (Z/pZ)* schema) :
 ![image](https://github.com/user-attachments/assets/e448f795-d32c-42e1-8d11-334303abfc8b)
 
+Encoding wav on channel "21" (first coding channel 2, then 1) with 3 lsb bit : 
+![image](https://github.com/user-attachments/assets/1226a372-0312-4af9-b1a1-404af93c62c8)
+
