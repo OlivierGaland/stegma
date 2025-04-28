@@ -2,13 +2,15 @@ import hashlib
 import PIL.Image, PIL.ImageChops
 import matplotlib.pyplot as plt
 import numpy as np
+from collections import Counter
 
 from src.media.base import Media
 from src.kwargs import validate_kwargs
 from src.tools import ProgressBar
+from src.noise.none import NoNoiseGenerator
 from og_log import LOG
 
-class Image(Media):
+class PngRgbaImage(Media):
     CHANNEL_BIT_SIZE = 8
     CHANNEL_COUNT = 4
     PIXEL_BIT_SIZE = CHANNEL_COUNT * CHANNEL_BIT_SIZE
@@ -21,7 +23,7 @@ class Image(Media):
         return cleaned_img.tobytes()
 
     @property
-    def get_bit_count(self): return self.media.size[0] * self.media.size[1] * Image.PIXEL_BIT_SIZE
+    def get_bit_count(self): return self.media.size[0] * self.media.size[1] * PngRgbaImage.PIXEL_BIT_SIZE
 
     def entropy(self,salt: str) -> str:
         return hashlib.sha256(self.tobytes_for_hash + salt.encode("utf-8")).hexdigest()
@@ -33,8 +35,19 @@ class Image(Media):
         self.media = PIL.Image.open(self.filename).convert("RGBA")
         super().__init__(**kwargs)
 
-    @staticmethod
-    def Generate_bit_pattern(nbit: int, pattern: str):
+
+    def validate_pattern(self,pattern):
+        count = Counter(pattern)
+        is_valid = (
+            all(count[char] <= 1 for char in 'RGBA') and
+            sum(count[char] for char in 'RGBA') <= 4 and
+            sum(count.values()) == len(pattern)
+        )
+        if not is_valid:
+            raise Exception("Invalid RGBA pattern")
+    
+
+    def generate_lsb_encoding_pattern(self, nbit: int, pattern: str):
         if not (1 <= nbit <= 3):
             raise ValueError("nbit must be between 1 and 3")
 
@@ -44,16 +57,17 @@ class Image(Media):
             raise ValueError("pattern must only contain R, G, B, A")
         
         channel_order = {ch: i for i, ch in enumerate("RGBA")}
-        pixel_bitfield = [0] * Image.PIXEL_BIT_SIZE  
+        pixel_bitfield = [0] * PngRgbaImage.PIXEL_BIT_SIZE  
 
         bit_index = 1
         for ch in pattern:
-            channel_start = channel_order[ch] * Image.CHANNEL_BIT_SIZE
+            channel_start = channel_order[ch] * PngRgbaImage.CHANNEL_BIT_SIZE
             for i in range(nbit):
                 pixel_bitfield[channel_start + i] = bit_index
                 bit_index += 1
 
         return pixel_bitfield
+
 
     def encode(self, algo, codec, dispersion, noise):
         tmp = self.media.copy()
@@ -67,7 +81,7 @@ class Image(Media):
         o = dispersion.start_offset
         i = 0
 
-        offsets_status = [ False ] * algo.get_coding_bit_count(self)
+        offsets_status = [ False ] * algo.get_coding_bit_count()
 
         pb = ProgressBar("Encoding secret : ",0,len(codec.output))
 
@@ -79,8 +93,8 @@ class Image(Media):
             x = pixel_index % xmax
             y = pixel_index // xmax
             pos = algo.encoding_pattern.index(pattern_value)
-            bit = pos % Image.CHANNEL_BIT_SIZE
-            channel = pos // Image.CHANNEL_BIT_SIZE
+            bit = pos % PngRgbaImage.CHANNEL_BIT_SIZE
+            channel = pos // PngRgbaImage.CHANNEL_BIT_SIZE
             r, g, b, a = tmp.getpixel((x, y))
             c = [r, g, b, a]
 
@@ -95,30 +109,31 @@ class Image(Media):
 
         output = tmp.copy()
 
-        pb = ProgressBar("Adding noise : ", 0, len(offsets_status))
+        if type(noise) != NoNoiseGenerator:
+            pb = ProgressBar("Adding noise : ", 0, len(offsets_status))
 
-        for i in range(len(offsets_status)):
-            pb.update(i)
+            for i in range(len(offsets_status)):
+                pb.update(i)
 
-            if offsets_status[i]:
-                continue
+                if offsets_status[i]:
+                    continue
 
-            pattern_value = i % pattern_coding_bits_count + 1
-            pixel_index = (i - (i % pattern_coding_bits_count))//pattern_coding_bits_count
-            x = pixel_index % xmax
-            y = pixel_index // xmax
-            pos = algo.encoding_pattern.index(pattern_value)
-            bit = pos % Image.CHANNEL_BIT_SIZE
-            channel = pos // Image.CHANNEL_BIT_SIZE
-            r, g, b, a = output.getpixel((x, y))
-            c = [r, g, b, a]
+                pattern_value = i % pattern_coding_bits_count + 1
+                pixel_index = (i - (i % pattern_coding_bits_count))//pattern_coding_bits_count
+                x = pixel_index % xmax
+                y = pixel_index // xmax
+                pos = algo.encoding_pattern.index(pattern_value)
+                bit = pos % PngRgbaImage.CHANNEL_BIT_SIZE
+                channel = pos // PngRgbaImage.CHANNEL_BIT_SIZE
+                r, g, b, a = output.getpixel((x, y))
+                c = [r, g, b, a]
 
-            n = noise.get((c[channel] >> bit) & 1)
-            if n is not None:
-                c[channel] = (c[channel] & ~(1 << bit)) | ((n & 1) << bit)
-                output.putpixel((x, y), (c[0], c[1], c[2], c[3]))
+                n = noise.get((c[channel] >> bit) & 1)
+                if n is not None:
+                    c[channel] = (c[channel] & ~(1 << bit)) | ((n & 1) << bit)
+                    output.putpixel((x, y), (c[0], c[1], c[2], c[3]))
 
-        pb.end()
+            pb.end()
 
         if self.summary:
             print("Summary windows opened")
@@ -155,8 +170,8 @@ class Image(Media):
             x = pixel_index % xmax
             y = pixel_index // xmax
             pos = algo.encoding_pattern.index(pattern_value)
-            bit = pos % Image.CHANNEL_BIT_SIZE
-            channel = pos // Image.CHANNEL_BIT_SIZE
+            bit = pos % PngRgbaImage.CHANNEL_BIT_SIZE
+            channel = pos // PngRgbaImage.CHANNEL_BIT_SIZE
             r, g, b, a = self.media.getpixel((x, y))
             c = [r, g, b, a]
 
@@ -177,6 +192,8 @@ class Image(Media):
         return secret
 
 
+    def save(self, output_filename, output):
+        output.save(output_filename, format="PNG")
 
     def show_summary(self, pinput, ptmp, poutput):
         input_img = pinput.convert("RGB")

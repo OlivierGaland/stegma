@@ -16,7 +16,7 @@ class SteganoWriter(SteganoManager):
         self.output = self.media.encode(self.algo,self.codec,self.dispersion,self.noise)        
 
     def write(self,filename):
-        self.output.save(filename, format="PNG")
+        self.media.save(filename,self.output)
         LOG.info(f"File saved : {filename}")
 
     def register_noise(self,noise,**kwargs):

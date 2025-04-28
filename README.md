@@ -9,7 +9,7 @@ Important : This package should not (yet) used for production as it may strongly
 
 Planned enhancement :
 - Implemented : Decoy mode : This will not encode any header (storing data lenght) but need user to provide data length at decoding. Usage could be hiding an encryption key inside the image, if the password is wrong, a plausible but erroneous encryption key will be returned
-- Media type : add other media or file format (audio, video)
+- Media type : add other media or file format (audio, video), implemented WAV 
 - Refactoring to add other steganography method (currently only LSB) : Added LSB on 1,2 and 3 bits + choice of encoding pattern in channels RGBA ("BG" means B then G are used)
 - Pip package creation
 
@@ -25,7 +25,7 @@ Once ran it will create the output png file and show a plot of the result (input
 
 Input :
 
-- generate/retrieve : Image to process (any format, output will be a RGBA png)
+- generate/retrieve : Image to process (any format, output will be a RGBA png) / Wav to process (output will be same format)
 - generate/retrieve : Password
 - generate/retrieve : Dispersion algo
 - generate : Secret to hide (bitfield in string format)
@@ -34,7 +34,7 @@ Input :
 Steganography logic :
 
 - Converting input image into png RGBA 
-- Using LSB (least significant bit) on channel R,G,B with 3 coding bit for a pixel (4*8 = 32 bits)
+- Using LSB (least significant bit), max coding bit is 3, a pattern can customize coding (channel selection and order) : ex "RG" use only R and G channel for picture, "2" will use channel 2 for wav
 - Secret is crypted using password hash in xor schema
 
 Offset codec logic :
