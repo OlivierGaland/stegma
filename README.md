@@ -88,5 +88,6 @@ Encoding using ChainedHashDispersion (determinist dispersion using hash sequence
 ![image](https://github.com/user-attachments/assets/165ae4f0-5723-44e1-9c70-7351aa0df380)
 
 Encoding wav on channel "21" (first coding channel 2, then 1) with 3 lsb bit : 
-![image](https://github.com/user-attachments/assets/1226a372-0312-4af9-b1a1-404af93c62c8)
+![image](https://github.com/user-attachments/assets/18792782-9ee6-437f-82c2-bc9e14142d4b)
+
 
